@@ -1,5 +1,7 @@
 import math
 from collections import Counter
+
+
 def prime_factors(n):
     if not is_integer(n):
         raise ValueError("You number have to be integer")
@@ -13,18 +15,21 @@ def prime_factors(n):
     if n > 1:
         factors[n] = factors.get(n, 0) + 1
     return factors
+
+
 def is_integer(num):
     return num == int(num)
+
+
 def lcm(a, b):
     factors_a = prime_factors(a)
     factors_b = prime_factors(b)
-    lcm_factors = factors_a | factors_b    
-    
-    lcm = 1
-    lcm_factors_keys = list(lcm_factors.keys())
-    lcm_factors_values = list(lcm_factors.values())
+    lcm_factors = factors_a | factors_b
 
-    for i in range(0, len(lcm_factors)):
-        lcm *= lcm_factors_keys[i] ** lcm_factors_values[i]
-    return lcm
+    lcm_value = 1
+    for lcm_factors_keys, lcm_factors_values in lcm_factors.items():
+        lcm_value *= lcm_factors_keys ** lcm_factors_values
+    return lcm_value
+
+
 print(lcm(192, 348))
