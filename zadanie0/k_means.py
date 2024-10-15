@@ -9,10 +9,7 @@ squares.
 
 # normalize data once during data loading
 # more descriptive names: temp are not accurate
-
-# error handling while opening file
 # variable hardly encoded kmeans(3). Make this a global_variable
-#
 
 
 import csv
@@ -27,7 +24,8 @@ def load_data(file, data):
 
 
 def distance_two_dimension(point_one, point_two):
-    return math.sqrt((point_one[0] - point_two[0]) ** 2 + (point_one[1] - point_two[1]) ** 2)
+    return math.sqrt((point_one[0] - point_two[0]) **
+                     2 + (point_one[1] - point_two[1]) ** 2)
 
 
 def normalize(data):
@@ -37,7 +35,8 @@ def normalize(data):
     maxx = max(x_coords)
     miny = min(y_coords)
     maxy = max(y_coords)
-    normalized_data = [((x - minx) / (maxx - minx), (y - miny) / (maxy - miny)) for x, y in data]
+    normalized_data = [((x - minx) / (maxx - minx), (y - miny) / (maxy - miny))
+                       for x, y in data]
     return normalized_data
 
 
@@ -55,23 +54,23 @@ def assign_clusters(centers, data):
         wcss += min_dist ** 2
     return labels, wcss
 
-# definitely needs improvements TODO
-def update_centers(centers, labels, data):
-    for c in range(len(centers)):
-        cluster = []
-        l = 0
-        for point in data:
-            if labels[l] == c:
-                cluster.append(point)
-            l += 1
-        if len(cluster) > 0:
-            center = []
-            for i in range(len(point)):
-                temp = 0.0
-                for j in range(len(cluster)):
-                    temp += float(cluster[j][i])
-                center.append(temp / len(cluster))
-            centers[c] = center
+
+def calc_new_centers(n_clusters, labels, data):
+    new_centers = []
+
+    clusters = [[] for _ in range(n_clusters)]
+
+    for loc, point in zip(labels, data):
+        clusters[loc].append(point)
+    for cluster in clusters:
+        sumx, sumy = 0, 0
+        for point in cluster:
+            sumx += point[0]
+            sumy += point[1]
+        sumx /= len(cluster)
+        sumy /= len(cluster)
+        new_centers.append([sumx, sumy])
+    return new_centers
 
 
 def kmeans(n_clusters, data):
@@ -85,9 +84,8 @@ def kmeans(n_clusters, data):
         labels, wcss = assign_clusters(centers, data)
         if labels == old_labels:
             break
-        update_centers(centers, labels, data)
+        centers = calc_new_centers(n_clusters, labels, data)
         old_labels = labels
-    # wcss is not in the scope, may lead to problems
     return labels, wcss, n_iters
 
 
