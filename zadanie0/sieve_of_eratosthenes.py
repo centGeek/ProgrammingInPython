@@ -1,7 +1,3 @@
-import math
-from math import sqrt
-from math import ceil
-
 amount_of_numbers = 100
 
 
@@ -15,7 +11,5 @@ def sieve_of_eratosthenes(primes_to_this_number):
                 tab[j] = False
     return primes
 
-
-# print(f"Wielkosc sita wynosi: {amount_of_numbers}")
 
 print(f"Prime numbers to {amount_of_numbers} {sieve_of_eratosthenes(amount_of_numbers)}")
