@@ -2,11 +2,12 @@ import csv
 import json
 import math
 import random
-from asyncio.windows_events import INFINITE
+import logging
+from venv import logger
 
 # Constants
 MAX_ROUNDS = 50
-NUMER_OF_SHEEPS = 15
+NUMER_OF_SHEEP = 5
 DISTANCE_OF_WOLF_MOVEMENT = 1.0
 DISTANCE_OF_SHEEP_MOVEMENT = 0.5
 MAX_INIT_POSITION = 10.0
@@ -26,12 +27,11 @@ class Animal:
         self.jump_value = jump_value
         self.name = name
 
-    def move(self, is_debug_prints: bool = False):
+    def move(self):
+        # dead sheep cannot move
         if self.x is not None:
             direction = random.choice(["up", "down", "left", "right"])
-            if is_debug_prints:
-                print(f"{self.name} movement from {self.x} {self.y} :",
-                      direction)
+            logger.debug("%s chooses direction: %s", self.name, direction)
             match direction:
                 case "up":
                     self.y += self.jump_value
@@ -41,6 +41,7 @@ class Animal:
                     self.x -= self.jump_value
                 case "right":
                     self.x += self.jump_value
+            logger.debug("%s moves to (%f,%f)", self.name, self.x, self.y)
 
     def get_position_string(self):
         return f"{self.name} is at ({self.x:.3f},{self.y:.3f})"
@@ -54,27 +55,29 @@ class Animal:
 
 
 class Sheep(Animal):
-    # dead sheeps are counted
-    counter_of_Sheeps = 0
-    # only alive sheeps counter
-    alive_sheeps = 0
+    # dead sheep are counted too
+    counter_of_sheep = 0
+    # only alive sheep counter
+    alive_sheep = 0
 
     def __init__(self, max_init_posiotion: float, jump_value: float):
         x, y = (random.uniform(-max_init_posiotion, max_init_posiotion),
                 random.uniform(-max_init_posiotion, max_init_posiotion))
 
-        Sheep.counter_of_Sheeps += 1
-        self.number_of_sheep = Sheep.counter_of_Sheeps
-        Sheep.alive_sheeps += 1
+        Sheep.counter_of_sheep += 1
+        self.number_of_sheep = Sheep.counter_of_sheep
+        Sheep.alive_sheep += 1
 
         super().__init__(x, y, jump_value, f"Sheep {self.number_of_sheep}")
+        logger.debug("%s initialized at: (%f,%f)",
+                     self.name, self.x, self.y)
 
 
 class Wolf(Animal):
-    def __init__(self, jump_value: float, list_of_sheeps, name="Wolf"):
+    def __init__(self, jump_value: float, list_of_sheep, name="Wolf"):
         x, y = 0, 0
         super().__init__(x, y, jump_value, name)
-        self.list_of_sheeps = list_of_sheeps
+        self.list_of_sheep = list_of_sheep
         self.last_chasing_sheep = None
 
     def calc_square_distance_to_sheep(self, sheep: Sheep):
@@ -87,33 +90,34 @@ class Wolf(Animal):
     def kill_sheep(self, sheep: Sheep):
         sheep.x = None
         sheep.y = None
-        Sheep.alive_sheeps -= 1
+        Sheep.alive_sheep -= 1
 
-    def move(self, is_debug_prints: bool = False):
-        if self.list_of_sheeps:
-            closest = min(self.list_of_sheeps,
+    def move(self):
+        if self.list_of_sheep:
+            closest = min(self.list_of_sheep,
                           key=lambda sheep: self.calc_square_distance_to_sheep(
                               sheep))
             dist = math.sqrt(self.calc_square_distance_to_sheep(closest))
+            logger.debug("%s is closest to %s, distance %f", self.name,
+                         closest.name, dist)
             if dist <= self.jump_value:
                 self.x = closest.x
                 self.y = closest.y
-                # self.list_of_sheeps.remove(closest)
-                if is_debug_prints:
-                    print(f"I ate the sheep at {closest.x} {closest.y}")
+
                 self.kill_sheep(closest)
                 self.last_chasing_sheep = None
-                return closest.number_of_sheep
+                logger.debug("%s moved to (%f,%f)", self.name, self.x, self.y)
+                return closest
             else:
-                if is_debug_prints:
-                    print(f"{self.name} movement from {self.x} {self.y} :")
                 self.last_chasing_sheep = closest
+                logger.info("%s is chasing %s", self.name, closest.name)
 
                 dx = (closest.x - self.x) / dist
                 dy = (closest.y - self.y) / dist
 
                 self.x += dx * self.jump_value
                 self.y += dy * self.jump_value
+                logger.debug("%s moved to (%f,%f)", self.name, self.x, self.y)
                 return None
 
     def get_number_of_chasing_sheep(self):
@@ -124,63 +128,98 @@ def delete_and_init_files():
     try:
         with open(JSON_FILE_NAME, "w") as json_file:
             json.dump([], json_file)
-        with open(CSV_FILE_NAME, "w",newline='') as csv_file:
+            logger.debug("Empty collection saved to json")
+
+        with open(CSV_FILE_NAME, "w", newline='') as csv_file:
             csv.writer(csv_file).writerow(
-                ["Number of round", "Alive sheeps"])
+                ["Number of round", "Alive sheep"])
+            logger.debug("Header saved to csv")
+
     except IOError:
-        print("Error occurred with file")
+        logger.error("An error occurred when preparing files")
 
 
-def add_to_json(round_counter, wolf, sheeps):
-    with open(JSON_FILE_NAME, "r") as json_file:
-        json_data = json.load(json_file)
+def add_to_json(round_counter, wolf, sheep):
+    try:
+        with open(JSON_FILE_NAME, "r") as json_file:
+            json_data = json.load(json_file)
+    except IOError:
+        logger.error("Error occurred with reading json")
+    try:
+        with open(JSON_FILE_NAME, "w") as json_file:
+            dict_round = {
+                "round_no": round_counter,
+                "wolf_pos": wolf.get_position_tuple(),
+                "sheep_pos": [_sheep.get_position_tuple() for _sheep in sheep],
+            }
+            json_data.append(dict_round)
+            json.dump(json_data, json_file, ensure_ascii=False, indent=4)
+            logger.debug("Data saved into json")
+    except IOError:
+        logger.error("Error occurred with writing to json")
 
-    with open(JSON_FILE_NAME, "w") as json_file:
-        dict_round = {
-            "round_no": round_counter,
-            "wolf_pos": wolf.get_position_tuple(),
-            "sheep_pos": [sheep.get_position_tuple() for sheep in sheeps],
-        }
-        json_data.append(dict_round)
-        json.dump(json_data, json_file, ensure_ascii=False, indent=4)
+
+def add_to_csv(round_counter, alive_sheep):
+    try:
+        with open(CSV_FILE_NAME, "a", newline='') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow([f"{round_counter}", f"{alive_sheep}"])
+            logger.debug("Data saved into csv")
+    except IOError:
+        logger.error("Error occurred with appending to csv")
 
 
-def add_to_csv(round_counter, alive_sheeps):
-    with open(CSV_FILE_NAME, "a", newline='') as csvfile:
-        csvwriter = csv.writer(csvfile)
-        csvwriter.writerow([f"{round_counter}", f"{alive_sheeps}"])
-
+def get_logger(logging_level):
+    logging.basicConfig(filename="chase.log",
+                        format='%(asctime)s - %(levelname)s - %(message)s',
+                        filemode="w")
+    logger = logging.getLogger()
+    logger.setLevel(logging_level)
+    return logger
 
 
 # Main body
 if __name__ == "__main__":
+
     delete_and_init_files()
     round_counter = 1
-    sheeps = []
-    for i in range(NUMER_OF_SHEEPS):
-        sheeps.append(
+    sheep = []
+    for i in range(NUMER_OF_SHEEP):
+        sheep.append(
             Sheep(MAX_INIT_POSITION, DISTANCE_OF_SHEEP_MOVEMENT))
-    wolf = Wolf(DISTANCE_OF_WOLF_MOVEMENT, sheeps)
+    logger.info("Position of all sheep were determined")
+    wolf = Wolf(DISTANCE_OF_WOLF_MOVEMENT, sheep)
 
-    while round_counter <= MAX_ROUNDS:
-        if sheeps:
-            for sheep in sheeps:
-                sheep.move(False)
-        else:
+    while True:
+        if round_counter > MAX_ROUNDS:
+            logger.info("Simulation terminated as max "
+                        "number of rounds have been reached")
             break
-        eaten_sheep = wolf.move(False)
+        logger.info("Round %d started", round_counter)
+        if Sheep.alive_sheep > 0:
+            for _sheep in sheep:
+                _sheep.move()
+        else:
+            logger.info("Simulation terminated as all sheep have been eaten")
+            break
+        logger.info("All alive sheep moved")
+        eaten_sheep = wolf.move()
+        logger.info("Wolf has moved")
 
-        add_to_json(round_counter, wolf, sheeps)
-        add_to_csv(round_counter, Sheep.alive_sheeps)
+        add_to_json(round_counter, wolf, sheep)
+        add_to_csv(round_counter, Sheep.alive_sheep)
 
         print(f"\nRound number: {round_counter}\n"
               f"{wolf.get_position_string()}\n"
-              f"Number of alive Sheeps: {Sheep.alive_sheeps}"
+              f"Number of alive Sheep: {Sheep.alive_sheep}"
               )
         if wolf.last_chasing_sheep:
             print(
-                f"The wolf is chasing sheep with number: {wolf.get_number_of_chasing_sheep()}")
+                f"The wolf is chasing sheep with number:"
+                f" {wolf.get_number_of_chasing_sheep()}")
         if eaten_sheep:
-            print(f"The wolf eaten sheep number {eaten_sheep}")
-
+            print(f"The wolf has eaten {eaten_sheep.name}")
+            logger.info("%s was eaten", eaten_sheep.name)
+        logger.info("End of round %d, alive sheep: %d", round_counter,
+                    Sheep.alive_sheep)
         round_counter += 1
