@@ -5,9 +5,8 @@ import json
 import math
 import random
 import logging
-from venv import logger
 
-# Constants
+# Constants OR Global Var
 MAX_ROUNDS = 50
 NUMBER_OF_SHEEP = 15
 DISTANCE_OF_SHEEP_MOVEMENT = 0.5
@@ -16,6 +15,8 @@ MAX_INIT_POSITION = 10.0
 CONFIG_FILE_NAME = ""
 JSON_FILE_NAME = "pos.json"
 CSV_FILE_NAME = "alive.csv"
+
+logger = None
 
 
 class Animal:
@@ -186,14 +187,45 @@ def get_logger(logging_level):
 
 def load_config(config_path):
     try:
-        global MAX_INIT_POSITION, DISTANCE_OF_SHEEP_MOVEMENT, DISTANCE_OF_WOLF_MOVEMENT
         config = configparser.ConfigParser()
         config.read(config_path)
 
-        MAX_INIT_POSITION = float(config['Sheep']['InitPosLimit'])
-        DISTANCE_OF_SHEEP_MOVEMENT = float(config['Sheep']['MoveDist'])
+        max_init_pos_to_check = config['Sheep']['InitPosLimit']
+        dist_of_sheep_mov = config['Sheep']['MoveDist']
 
-        DISTANCE_OF_WOLF_MOVEMENT = float(config['Wolf']['MoveDist'])
+        dist_of_wolf_mov = config['Wolf']['MoveDist']
+
+        try:
+            max_init_pos_to_check = float(max_init_pos_to_check)
+        except ValueError:
+            raise configparser.Error(
+                "InitPosLimit in config must be a number!")
+        if max_init_pos_to_check <= 0:
+            raise configparser.Error(
+                "InitPosLimit in config must be greater than 0")
+
+        try:
+            dist_of_sheep_mov = float(dist_of_sheep_mov)
+        except ValueError:
+            raise configparser.Error(
+                "MoveDist for sheep in config must be a number!")
+        if dist_of_sheep_mov <= 0:
+            raise configparser.Error(
+                "MoveDist for sheep in config must be greater than 0")
+        try:
+            dist_of_wolf_mov = float(dist_of_wolf_mov)
+        except ValueError:
+            raise configparser.Error(
+                "MoveDist for wolf in config must be a number!")
+        if dist_of_wolf_mov <= 0:
+            raise configparser.Error(
+                "MoveDist for wolf in config must be greater than 0")
+
+        global MAX_INIT_POSITION, DISTANCE_OF_SHEEP_MOVEMENT, DISTANCE_OF_WOLF_MOVEMENT
+
+        MAX_INIT_POSITION = max_init_pos_to_check
+        DISTANCE_OF_SHEEP_MOVEMENT = dist_of_sheep_mov
+        DISTANCE_OF_WOLF_MOVEMENT = dist_of_wolf_mov
 
         logger.debug(
             "Config loaded successfully, loaded data: "
@@ -250,21 +282,26 @@ def argument_parse():
     parser = argparse.ArgumentParser(description="Chase sheep simulation.")
 
     parser.add_argument("-c", "--config", type=validate_config,
-                        help="Path to config file", metavar="FILE")
+                        help="Path to .ini config file", metavar="FILE")
 
     parser.add_argument("-l", "--log",
                         choices=["DEBUG", "INFO", "WARNING", "ERROR",
                                  "CRITICAL"],
                         help="Logging level should be one of "
-                             "[DEBUG, INFO, WARNING, ERROR, CRITICAL]")
+                             "[DEBUG, INFO, WARNING, ERROR, CRITICAL]",
+                        metavar="LEVEL")
 
     parser.add_argument("-r", "--rounds", type=positive_int_rounds,
-                        default=MAX_ROUNDS, help="Number of rounds")
+                        default=MAX_ROUNDS, help="Number of rounds",
+                        metavar="NUM")
 
     parser.add_argument("-s", "--sheep", type=positive_int_sheep,
-                        default=NUMBER_OF_SHEEP, help="Number of sheep")
+                        default=NUMBER_OF_SHEEP, help="Number of sheep",
+                        metavar="NUM")
 
-    parser.add_argument("-w", "--wait", action="store_true")
+    parser.add_argument("-w", "--wait", action="store_true",
+                        help="Pauses program after each round,"
+                             " waiting for any keyboard input.")
 
     args = parser.parse_args()
 
@@ -288,6 +325,7 @@ def argument_parse():
 
 def main():
     args = argument_parse()
+    global logger
     logger = get_logger(args.log)
     load_config(args.config)
 
