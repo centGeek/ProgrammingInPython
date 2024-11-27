@@ -194,6 +194,12 @@ def load_config(config_path):
         DISTANCE_OF_SHEEP_MOVEMENT = float(config['Sheep']['MoveDist'])
 
         DISTANCE_OF_WOLF_MOVEMENT = float(config['Wolf']['MoveDist'])
+
+        logger.debug(
+            "Config loaded successfully, loaded data: "
+            "Sheep:[InitPosLimit %f, MoveDist %f] "
+            "Wolf:[MoveDist %f]", MAX_INIT_POSITION,
+            DISTANCE_OF_SHEEP_MOVEMENT, DISTANCE_OF_WOLF_MOVEMENT)
     except KeyError:
         DISTANCE_OF_WOLF_MOVEMENT = 1.0
         DISTANCE_OF_SHEEP_MOVEMENT = 0.5
