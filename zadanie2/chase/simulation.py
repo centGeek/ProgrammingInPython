@@ -1,3 +1,5 @@
+import argparse
+import configparser
 import csv
 import json
 import math
@@ -7,10 +9,11 @@ from venv import logger
 
 # Constants
 MAX_ROUNDS = 50
-NUMER_OF_SHEEP = 5
-DISTANCE_OF_WOLF_MOVEMENT = 1.0
+NUMER_OF_SHEEP = 15
 DISTANCE_OF_SHEEP_MOVEMENT = 0.5
+DISTANCE_OF_WOLF_MOVEMENT = 1.0
 MAX_INIT_POSITION = 10.0
+CONFIG_FILE_NAME = ""
 JSON_FILE_NAME = "pos.json"
 CSV_FILE_NAME = "alive.csv"
 
@@ -84,7 +87,7 @@ class Wolf(Animal):
         if sheep.x is not None:
             return (self.x - sheep.x) ** 2 + (self.y - sheep.y) ** 2
         else:
-            # Thanks to that this sheep is never considered to be the closest
+            # Thanks to that dead sheep is never considered to be the closest
             return float('inf')
 
     def kill_sheep(self, sheep: Sheep):
@@ -93,32 +96,31 @@ class Wolf(Animal):
         Sheep.alive_sheep -= 1
 
     def move(self):
-        if self.list_of_sheep:
-            closest = min(self.list_of_sheep,
-                          key=lambda sheep: self.calc_square_distance_to_sheep(
-                              sheep))
-            dist = math.sqrt(self.calc_square_distance_to_sheep(closest))
-            logger.debug("%s is closest to %s, distance %f", self.name,
-                         closest.name, dist)
-            if dist <= self.jump_value:
-                self.x = closest.x
-                self.y = closest.y
+        closest = min(self.list_of_sheep,
+                      key=lambda sheep: self.calc_square_distance_to_sheep(
+                          sheep))
+        dist = math.sqrt(self.calc_square_distance_to_sheep(closest))
+        logger.debug("%s is closest to %s, distance %f", self.name,
+                     closest.name, dist)
+        if dist <= self.jump_value:
+            self.x = closest.x
+            self.y = closest.y
 
-                self.kill_sheep(closest)
-                self.last_chasing_sheep = None
-                logger.debug("%s moved to (%f,%f)", self.name, self.x, self.y)
-                return closest
-            else:
-                self.last_chasing_sheep = closest
-                logger.info("%s is chasing %s", self.name, closest.name)
+            self.kill_sheep(closest)
+            self.last_chasing_sheep = None
+            logger.debug("%s moved to (%f,%f)", self.name, self.x, self.y)
+            return closest
+        else:
+            self.last_chasing_sheep = closest
+            logger.info("%s is chasing %s", self.name, closest.name)
 
-                dx = (closest.x - self.x) / dist
-                dy = (closest.y - self.y) / dist
+            dx = (closest.x - self.x) / dist
+            dy = (closest.y - self.y) / dist
 
-                self.x += dx * self.jump_value
-                self.y += dy * self.jump_value
-                logger.debug("%s moved to (%f,%f)", self.name, self.x, self.y)
-                return None
+            self.x += dx * self.jump_value
+            self.y += dy * self.jump_value
+            logger.debug("%s moved to (%f,%f)", self.name, self.x, self.y)
+            return None
 
     def get_number_of_chasing_sheep(self):
         return self.last_chasing_sheep.number_of_sheep
@@ -178,15 +180,94 @@ def get_logger(logging_level):
     return logger
 
 
-# Main body
-if __name__ == "__main__":
+def load_config(config_path):
+    try:
+        global MAX_INIT_POSITION, DISTANCE_OF_SHEEP_MOVEMENT, DISTANCE_OF_WOLF_MOVEMENT
+        config = configparser.ConfigParser()
+        config.read(config_path)
+
+        MAX_INIT_POSITION = float(config['Sheep']['InitPosLimit'])
+        DISTANCE_OF_SHEEP_MOVEMENT = float(config['Sheep']['MoveDist'])
+
+        DISTANCE_OF_WOLF_MOVEMENT = float(config['Wolf']['MoveDist'])
+    except KeyError:
+        DISTANCE_OF_WOLF_MOVEMENT = 1.0
+        DISTANCE_OF_SHEEP_MOVEMENT = 0.5
+        MAX_INIT_POSITION = 10.0
+        logging.critical("Config file was corrupted, default values applied")
+
+
+def validate_config(file_path):
+    if not file_path.endswith(".ini"):
+        raise argparse.ArgumentTypeError("Config file must be a .ini file")
+    try:
+        with open(file_path, "r") as _:
+            return file_path
+    except FileNotFoundError:
+        raise argparse.ArgumentTypeError(f"File '{file_path}' does not exist")
+    except IOError:
+        raise argparse.ArgumentTypeError(
+            f"File '{file_path}' cannot be opened")
+
+
+def positive_int_rounds(val):
+    try:
+        int_value = int(val)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            "Number of rounds should be NUMBER not text")
+    if int_value <= 0:
+        raise argparse.ArgumentTypeError(
+            "Number of rounds should be positive integer.")
+    return int_value
+
+
+def positive_int_sheep(val):
+    try:
+        int_value = int(val)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            "Number of sheep should be NUMBER not text")
+    if int_value <= 0:
+        raise argparse.ArgumentTypeError(
+            "Number of sheep should be positive integer.")
+    return int_value
+
+
+def argument_parse():
+    parser = argparse.ArgumentParser(description="Chase sheep simulation.")
+
+    parser.add_argument("-c", "--config", type=validate_config,
+                        help="Path to config file", metavar="FILE")
+
+    parser.add_argument("-l", "--log",
+                        choices=["DEBUG", "INFO", "WARNING", "ERROR",
+                                 "CRITICAL"],
+                        help="Logging level should be one of "
+                             "[DEBUG, INFO, WARNING, ERROR, CRITICAL]")
+
+    parser.add_argument("-r", "--rounds", type=positive_int_rounds,
+                        default=MAX_ROUNDS, help="Number of rounds")
+
+    parser.add_argument("-s", "--sheep", type=positive_int_sheep,
+                        default=NUMER_OF_SHEEP, help="Number of sheep")
+
+    parser.add_argument("-w", "--wait", type=positive_int_sheep,)
+
+    args = parser.parse_args()
+
+    print(args)
+    if args.config:
+        load_config(args.config)
+
+def main():
+    logger = get_logger(logging.DEBUG)
+    argument_parse()
 
     delete_and_init_files()
     round_counter = 1
-    sheep = []
-    for i in range(NUMER_OF_SHEEP):
-        sheep.append(
-            Sheep(MAX_INIT_POSITION, DISTANCE_OF_SHEEP_MOVEMENT))
+    sheep = [Sheep(MAX_INIT_POSITION, DISTANCE_OF_SHEEP_MOVEMENT) for _ in
+             range(NUMER_OF_SHEEP)]
     logger.info("Position of all sheep were determined")
     wolf = Wolf(DISTANCE_OF_WOLF_MOVEMENT, sheep)
 
@@ -195,15 +276,17 @@ if __name__ == "__main__":
             logger.info("Simulation terminated as max "
                         "number of rounds have been reached")
             break
-        logger.info("Round %d started", round_counter)
         if Sheep.alive_sheep > 0:
+            logger.info("Round %d started", round_counter)
             for _sheep in sheep:
                 _sheep.move()
         else:
             logger.info("Simulation terminated as all sheep have been eaten")
             break
         logger.info("All alive sheep moved")
+
         eaten_sheep = wolf.move()
+
         logger.info("Wolf has moved")
 
         add_to_json(round_counter, wolf, sheep)
@@ -223,3 +306,8 @@ if __name__ == "__main__":
         logger.info("End of round %d, alive sheep: %d", round_counter,
                     Sheep.alive_sheep)
         round_counter += 1
+
+
+# Main body
+if __name__ == "__main__":
+    main()
