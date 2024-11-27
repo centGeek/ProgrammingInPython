@@ -9,7 +9,7 @@ from venv import logger
 
 # Constants
 MAX_ROUNDS = 50
-NUMER_OF_SHEEP = 15
+NUMBER_OF_SHEEP = 15
 DISTANCE_OF_SHEEP_MOVEMENT = 0.5
 DISTANCE_OF_WOLF_MOVEMENT = 1.0
 MAX_INIT_POSITION = 10.0
@@ -172,12 +172,16 @@ def add_to_csv(round_counter, alive_sheep):
 
 
 def get_logger(logging_level):
+    if logging_level is None:
+        _logger = logging.getLogger()
+        _logger.addHandler(logging.NullHandler())
+        return _logger
     logging.basicConfig(filename="chase.log",
                         format='%(asctime)s - %(levelname)s - %(message)s',
                         filemode="w")
-    logger = logging.getLogger()
-    logger.setLevel(logging_level)
-    return logger
+    _logger = logging.getLogger()
+    _logger.setLevel(logging_level)
+    return _logger
 
 
 def load_config(config_path):
@@ -235,6 +239,8 @@ def positive_int_sheep(val):
 
 
 def argument_parse():
+    global NUMBER_OF_SHEEP, MAX_ROUNDS
+
     parser = argparse.ArgumentParser(description="Chase sheep simulation.")
 
     parser.add_argument("-c", "--config", type=validate_config,
@@ -250,24 +256,39 @@ def argument_parse():
                         default=MAX_ROUNDS, help="Number of rounds")
 
     parser.add_argument("-s", "--sheep", type=positive_int_sheep,
-                        default=NUMER_OF_SHEEP, help="Number of sheep")
+                        default=NUMBER_OF_SHEEP, help="Number of sheep")
 
-    parser.add_argument("-w", "--wait", type=positive_int_sheep,)
+    parser.add_argument("-w", "--wait", action="store_true")
 
     args = parser.parse_args()
 
-    print(args)
-    if args.config:
-        load_config(args.config)
+    log_levels_dict = {
+        "DEBUG": 10,
+        "INFO": 20,
+        "WARNING": 30,
+        "ERROR": 40,
+        "CRITICAL": 50
+    }
+
+    args.log = log_levels_dict.get(args.log, None)
+
+    if args.sheep:
+        NUMBER_OF_SHEEP = args.sheep
+    if args.rounds:
+        MAX_ROUNDS = args.rounds
+
+    return args
+
 
 def main():
-    logger = get_logger(logging.DEBUG)
-    argument_parse()
+    args = argument_parse()
+    logger = get_logger(args.log)
+    load_config(args.config)
 
     delete_and_init_files()
     round_counter = 1
     sheep = [Sheep(MAX_INIT_POSITION, DISTANCE_OF_SHEEP_MOVEMENT) for _ in
-             range(NUMER_OF_SHEEP)]
+             range(NUMBER_OF_SHEEP)]
     logger.info("Position of all sheep were determined")
     wolf = Wolf(DISTANCE_OF_WOLF_MOVEMENT, sheep)
 
@@ -305,6 +326,8 @@ def main():
             logger.info("%s was eaten", eaten_sheep.name)
         logger.info("End of round %d, alive sheep: %d", round_counter,
                     Sheep.alive_sheep)
+        if args.wait:
+            input("\nFor next round press any key\n")
         round_counter += 1
 
 
