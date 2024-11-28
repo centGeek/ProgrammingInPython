@@ -374,7 +374,7 @@ def main():
         logger.info("End of round %d, alive sheep: %d", round_counter,
                     Sheep.alive_sheep)
         if args.wait:
-            #input("\nFor next round press any key\n")
+            # input("\nFor next round press any key\n")
             os.system('pause')
         round_counter += 1
 
