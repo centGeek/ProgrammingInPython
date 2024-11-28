@@ -5,6 +5,7 @@ import json
 import math
 import random
 import logging
+import os
 
 # Constants OR Global Var
 MAX_ROUNDS = 50
@@ -186,6 +187,8 @@ def get_logger(logging_level):
 
 
 def load_config(config_path):
+    if config_path is None:
+        return None
     try:
         config = configparser.ConfigParser()
         config.read(config_path)
@@ -371,7 +374,8 @@ def main():
         logger.info("End of round %d, alive sheep: %d", round_counter,
                     Sheep.alive_sheep)
         if args.wait:
-            input("\nFor next round press any key\n")
+            #input("\nFor next round press any key\n")
+            os.system('pause')
         round_counter += 1
 
 
