@@ -52,7 +52,7 @@
         button:hover {
             background-color: #3f4b8f;
         }
-        
+
     </style>
 </head>
 <body>
@@ -68,6 +68,7 @@
                     <th>Petal Length (cm)</th>
                     <th>Petal Width (cm)</th>
                     <th>Species</th>
+                    <th>Remove</th>
                 </tr>
             </thead>
             <tbody>
@@ -79,6 +80,13 @@
                     <td>{{ row.petal_length_cm }}</td>
                     <td>{{ row.petal_width_cm }}</td>
                     <td>{{ row.species }}</td>
+                    <td>
+                    <form action="/delete/{{ row.id }}" method="post" style="margin: 0; display: inline;">
+                        <button type="submit" onclick="return confirm('Are you sure you want to delete this record?')">
+                            Remove
+                        </button>
+                    </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -86,7 +94,7 @@
 
         <div class="back-btn">
             <a href="/add">
-                <button>Move to Form</button>
+                <button>Add new Iris instance</button>
             </a>
         </div>
     </div>

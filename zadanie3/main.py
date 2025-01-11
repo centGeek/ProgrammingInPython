@@ -54,7 +54,57 @@ class Iris(Resource):
             })
         return result
 
-api.add_resource(Iris, '/api/data')
+    @marshal_with(irisFields)
+    def delete(self, id):
+        iris = IrisModel.query.get(id)
+        if not iris:
+            abort(404, message="Iris with id {} not found".format(id))
+        db.session.delete(iris)
+        db.session.commit()
+        return '', 204
+    @marshal_with(irisFields)
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('sepal_length_cm', type=float, required=True, help="Sepal length cannot be blank")
+        parser.add_argument('sepal_width_cm', type=float, required=True, help="Sepal width cannot be blank")
+        parser.add_argument('petal_length_cm', type=float, required=True, help="Petal length cannot be blank")
+        parser.add_argument('petal_width_cm', type=float, required=True, help="Petal width cannot be blank")
+        parser.add_argument('species', type=str, required=True, help="Species cannot be blank")
+        
+        try:
+            args = parser.parse_args()
+        except Exception as e:
+            abort(400, message=str(e))
+
+        new_iris = IrisModel(
+            sepal_length_cm=args['sepal_length_cm'],
+            sepal_width_cm=args['sepal_width_cm'],
+            petal_length_cm=args['petal_length_cm'],
+            petal_width_cm=args['petal_width_cm'],
+            species=args['species']
+        )
+
+        db.session.add(new_iris)
+        db.session.commit()
+
+        return new_iris, 201 
+    def add_iris():
+        if request.method == 'POST':
+            try:
+                iris = IrisModel(
+                    sepal_length_cm=float(request.form['sepal_length_cm']),
+                    sepal_width_cm=float(request.form['sepal_width_cm']),
+                    petal_length_cm=float(request.form['petal_length_cm']),
+                    petal_width_cm=float(request.form['petal_width_cm']),
+                    species=request.form['species']
+                )
+                db.session.add(iris)
+                db.session.commit()
+            except Exception as e:
+                return f"An error occurred: {e}", 400
+        return render_template('form.html')
+
+api.add_resource(Iris, '/api/data', '/api/data/<int:id>')
 
 @app.route('/')
 def home():
@@ -78,12 +128,19 @@ def add_iris():
         except Exception as e:
             return f"An error occurred: {e}", 400
     return render_template('form.html')
+
+@app.route('/delete/<int:id>', methods=['POST', 'DELETE'])
 def delete_iris(id):
-    iris = IrisModel.query.filter_by(id=id).first()
-    if not iris:
-        abort(404, "Not found Iris")
-    db.session.delete(iris)
-    db.session.commit()
+    try:
+        iris = IrisModel.query.get(id)        
+        if not iris:
+            return f"Iris with id {id} not found", 404
+        db.session.delete(iris)
+        db.session.commit()
+
+        return render_template('index.html')
+    except Exception as e:
+        return f"An error occurred: {e}", 400
 
 if __name__ == '__main__':
     with app.app_context():
