@@ -138,7 +138,7 @@ def delete_iris(id):
         db.session.delete(iris)
         db.session.commit()
 
-        return render_template('index.html')
+        return render_template('form.html')
     except Exception as e:
         return f"An error occurred: {e}", 400
 
