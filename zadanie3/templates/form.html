@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add data for Iris</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 30px;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 1rem;
+            margin-bottom: 8px;
+            display: block;
+            color: #555;
+        }
+
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        input[type="number"]:focus, input[type="text"]:focus {
+            border-color: #5c6bc0;
+            outline: none;
+        }
+
+        button {
+            background-color: #5c6bc0;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #3f4b8f;
+        }
+
+        .back-btn {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .back-btn a {
+            color: #5c6bc0;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .back-btn a:hover {
+            color: #3f4b8f;
+        }
+        select {
+        width: 100%;
+        padding: 10px;
+        margin: 8px 0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 1rem;
+        box-sizing: border-box;
+        background-color: #fff;
+        color: #555;
+    }
+
+    select:focus {
+        border-color: #5c6bc0;
+        outline: none;
+    }
+
+    option {
+        font-size: 1rem;
+        color: #555;
+    }
+
+    @media (max-width: 768px) {
+        .container {
+            width: 90%;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+        }
+
+        button {
+            font-size: 0.9rem;
+        }
+    }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Enter Iris Data</h1>
+        <form action="/add" method="post">
+        
+            <label for="sepal_length_cm">Sepal Length (cm):</label>
+            <input type="number" id="sepal_length_cm" name="sepal_length_cm" step="0.01" required><br>
+
+            <label for="sepal_width_cm">Sepal Width (cm):</label>
+            <input type="number" id="sepal_width_cm" name="sepal_width_cm" step="0.01" required><br>
+
+            <label for="petal_length_cm">Petal Length (cm):</label>
+            <input type="number" id="petal_length_cm" name="petal_length_cm" step="0.01" required><br>
+
+            <label for="petal_width_cm">Petal Width (cm):</label>
+            <input type="number" id="petal_width_cm" name="petal_width_cm" step="0.01" required><br>
+
+            <select id="species" name="species" required>
+                <option value="Iris-setosa">Iris-setosa</option>
+                <option value="Iris-versicolor">Iris-versicolor</option>
+                <option value="Iris-virginica">Iris-virginica</option>
+            </select><br>
+
+            <button type="submit">Submit</button>
+        </form>
+
+        <div class="back-btn">
+            <a href="/">Back to Home</a>
+        </div>
+    </div>
+
+</body>
+</html>

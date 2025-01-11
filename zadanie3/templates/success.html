@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Success - Iris Data Added</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Success!</h1>
+        <p>The Iris data has been successfully added.</p>
+        <p><strong>Details of the added Iris:</strong></p>
+        <p>ID: {{ iris.id }}</p>
+        <p>Sepal Length (cm): {{ iris.sepal_length_cm }}</p>
+        <p>Sepal Width (cm): {{ iris.sepal_width_cm }}</p>
+        <p>Petal Length (cm): {{ iris.petal_length_cm }}</p>
+        <p>Petal Width (cm): {{ iris.petal_width_cm }}</p>
+        <p>Species: {{ iris.species }}</p>
+        <a href="{{ url_for('home') }}" class="button">Go back to the main page</a>
+    </div>
+
+</body>
+</html>

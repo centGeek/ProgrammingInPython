@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iris Data Table</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+      
+        .container {
+            background-color: #fff;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            width: 80%;
+            max-width: 900px;
+            margin-bottom: 20px;
+        }
+
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            background-color: #5c6bc0;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #3f4b8f;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Iris Data</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Sepal Length (cm)</th>
+                    <th>Sepal Width (cm)</th>
+                    <th>Petal Length (cm)</th>
+                    <th>Petal Width (cm)</th>
+                    <th>Species</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr>
+                    <td>{{ row.id }}</td>
+                    <td>{{ row.sepal_length_cm }}</td>
+                    <td>{{ row.sepal_width_cm }}</td>
+                    <td>{{ row.petal_length_cm }}</td>
+                    <td>{{ row.petal_width_cm }}</td>
+                    <td>{{ row.species }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="back-btn">
+            <a href="/add">
+                <button>Move to Form</button>
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
