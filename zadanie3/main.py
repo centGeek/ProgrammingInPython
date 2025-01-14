@@ -48,7 +48,7 @@ class Iris(Resource):
             abort(404, message="Iris with id {} not found".format(id))
         db.session.delete(iris)
         db.session.commit()
-        return '', 204
+        return {'primary key': iris.id}, 200
     def post(self): 
         args = iris_args.parse_args()
         if args["species"] in SPECIES_INT_KEYS.keys():
