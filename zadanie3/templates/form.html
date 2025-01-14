@@ -132,16 +132,16 @@
         <form action="/add" method="post">
         
             <label for="sepal_length_cm">Sepal Length (cm):</label>
-            <input type="number" id="sepal_length_cm" name="sepal_length_cm" step="0.01" required><br>
+            <input type="number" id="sepal_length_cm" name="sepal_length_cm" step="0.1" required><br>
 
             <label for="sepal_width_cm">Sepal Width (cm):</label>
-            <input type="number" id="sepal_width_cm" name="sepal_width_cm" step="0.01" required><br>
+            <input type="number" id="sepal_width_cm" name="sepal_width_cm" step="0.1" required><br>
 
             <label for="petal_length_cm">Petal Length (cm):</label>
-            <input type="number" id="petal_length_cm" name="petal_length_cm" step="0.01" required><br>
+            <input type="number" id="petal_length_cm" name="petal_length_cm" step="0.1" required><br>
 
             <label for="petal_width_cm">Petal Width (cm):</label>
-            <input type="number" id="petal_width_cm" name="petal_width_cm" step="0.01" required><br>
+            <input type="number" id="petal_width_cm" name="petal_width_cm" step="0.1" required><br>
 
             <select id="species" name="species" required>
                 <option value="Iris-setosa">Iris-setosa</option>
@@ -153,7 +153,7 @@
         </form>
 
         <div class="back-btn">
-            <a href="/">Back to Home</a>
+            <a href="{{ url_for('home') }}">Back to Home</a>
         </div>
     </div>
 
